@@ -414,11 +414,11 @@ footer::before{
 </div>
 </div>
 
-<div class="modal" id="labModal" style="z-index:9999">
+<div class="modal" id="labModal" style="z-index:9999" onclick="if(event.target===this){closeLabForm();}">
   <div class="sheet">
     <div class="sheethead">
       <h2 id="labFormTitle">Add Test</h2>
-      <button class="btn secondary" id="closeLabBtn">Close</button>
+      <button type="button" class="btn secondary" id="closeLabBtn" onclick="closeLabForm();return false;">Close</button>
     </div>
     <input type="hidden" id="labEditId">
     <div class="grid">
@@ -433,7 +433,7 @@ footer::before{
     </div>
     <div class="toolbar" style="margin-top:14px">
       <button class="btn primary" id="saveLabBtn">Save Test</button>
-      <button class="btn secondary" id="cancelLabBtn">Cancel</button>
+      <button type="button" class="btn secondary" id="cancelLabBtn" onclick="closeLabForm();return false;">Cancel</button>
     </div>
   </div>
 </div>
@@ -580,13 +580,19 @@ function openLabForm(id){
     $('labNotes').value=x.notes||'';
   }
   modal.classList.add('show');
+  modal.removeAttribute('aria-hidden');
   modal.style.display='flex';
   document.body.style.overflow='hidden';
 }
 function closeLabForm(){
   const modal=document.getElementById('labModal');
-  if(modal){modal.classList.remove('show');modal.style.display='none'}
+  if(modal){
+    modal.classList.remove('show');
+    modal.style.display='none';
+    modal.setAttribute('aria-hidden','true');
+  }
   document.body.style.overflow='';
+  return false;
 }
 function saveLabEntry(){
   const peptide=$('labPeptide').value.trim();
@@ -646,10 +652,10 @@ function renderLabs(){
   });
 }
 // Add Test uses an inline handler for maximum iOS Safari compatibility.
-if($('closeLabBtn')) $('closeLabBtn').onclick=closeLabForm;
-if($('cancelLabBtn')) $('cancelLabBtn').onclick=closeLabForm;
+
+
 if($('saveLabBtn')) $('saveLabBtn').onclick=saveLabEntry;
-if($('labModal')) $('labModal').onclick=e=>{if(e.target===$('labModal'))closeLabForm()};
+
 if($('labSearch')) $('labSearch').addEventListener('input',renderLabs);
 renderLabs();
 
