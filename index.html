@@ -215,38 +215,32 @@ footer::before{
   .quick-copy strong{font-size:15px!important}.quick-copy em{font-size:11px}
 }
 
-</style>
 
-<style id="translucent-vault-panels">
-/* Translucent glass treatment */
-.metric,
-.card,
-.quick,
-.neo-stat,
-.neo-quick,
-.shortcut-panel,
-.latest-panel {
-  background: rgba(8, 8, 34, 0.43) !important;
-  -webkit-backdrop-filter: blur(5px) saturate(1.15);
-  backdrop-filter: blur(5px) saturate(1.15);
+.lab-card{
+  position:relative;overflow:hidden;
+  margin:12px 0;padding:15px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(22,12,57,.74),rgba(7,13,31,.70));
+  border:1px solid rgba(115,72,199,.78);
+  box-shadow:inset 0 0 22px rgba(111,58,199,.07),0 0 20px rgba(65,34,150,.06);
+  backdrop-filter:blur(13px)
 }
-.neo-stat {
-  background: linear-gradient(145deg, rgba(13,11,42,.43), rgba(8,13,37,.34)) !important;
+.lab-card::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(#d35cff,#4a9cff);box-shadow:0 0 15px rgba(171,75,255,.55)
 }
-.shortcut-panel,
-.latest-panel {
-  background: linear-gradient(145deg, rgba(16,10,48,.42), rgba(5,9,29,.34)) !important;
-}
-.neo-quick {
-  background: linear-gradient(135deg, rgba(16,12,45,.39), rgba(7,12,31,.31)) !important;
-}
-.tabs {
-  background: rgba(5,7,24,.40) !important;
-  -webkit-backdrop-filter: blur(5px) saturate(1.15);
-  backdrop-filter: blur(5px) saturate(1.15);
-}
-</style>
+.lab-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.lab-title{font-size:20px;font-weight:900;margin:0;color:#fff}
+.lab-sub{color:#aeb7d5;font-size:12px;margin-top:3px}
+.lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+.lab-detail{background:rgba(7,10,28,.40);border:1px solid rgba(91,71,157,.42);border-radius:12px;padding:9px}
+.lab-detail span{display:block;color:#8f99b9;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.lab-detail b{display:block;color:#f2f5ff;font-size:14px;margin-top:3px}
+.lab-actions{display:flex;gap:7px;margin-top:12px}
+.lab-actions .btn{padding:7px 10px;font-size:12px}
+.lab-empty{text-align:center;padding:32px 10px;color:#aeb5cf}
+@media(max-width:560px){.lab-grid{grid-template-columns:1fr 1fr}}
 
+</style>
 </head>
 <body>
 <div class="app">
@@ -354,7 +348,14 @@ footer::before{
 </section>
 
 <section id="testing" class="view">
-<div class="card"><div class="sectionhead"><h2>Labs</h2></div><div id="testingList"></div></div>
+  <div class="card">
+    <div class="sectionhead">
+      <h2>Labs</h2>
+      <button class="btn primary" id="addLabBtn">+ Add Test</button>
+    </div>
+    <input id="labSearch" placeholder="Search peptide, batch, lab, notes…">
+    <div id="labsList" style="margin-top:10px"></div>
+  </div>
 </section>
 
 <section id="notes" class="view">
@@ -518,6 +519,124 @@ $('importFile').onchange=e=>{
  r.readAsText(f)
 };
 applySettings();renderAll();
+
+const LABS_KEY='vialVault_labs_v1';
+let labEntries=JSON.parse(localStorage.getItem(LABS_KEY)||'[]');
+
+function saveLabs(){
+  localStorage.setItem(LABS_KEY,JSON.stringify(labEntries));
+  renderLabs();
+}
+function openLabForm(id){
+  ['labPeptide','labBatch','labName','labDate','labPurity','labContent','labReport','labNotes'].forEach(k=>$(k).value='');
+  $('labEditId').value='';
+  $('labFormTitle').textContent='Add Test';
+  if(id){
+    const x=labEntries.find(i=>i.id===id); if(!x)return;
+    $('labEditId').value=id;
+    $('labFormTitle').textContent='Edit Test';
+    $('labPeptide').value=x.peptide||'';
+    $('labBatch').value=x.batch||'';
+    $('labName').value=x.lab||'';
+    $('labDate').value=x.date||'';
+    $('labPurity').value=x.purity||'';
+    $('labContent').value=x.content||'';
+    $('labReport').value=x.report||'';
+    $('labNotes').value=x.notes||'';
+  }
+  $('labModal').classList.add('show');
+}
+function closeLabForm(){$('labModal').classList.remove('show')}
+function saveLabEntry(){
+  const peptide=$('labPeptide').value.trim();
+  if(!peptide){alert('Add a peptide name first.');return}
+  const id=$('labEditId').value||(crypto.randomUUID?crypto.randomUUID():String(Date.now()));
+  const obj={
+    id,
+    peptide,
+    batch:$('labBatch').value.trim(),
+    lab:$('labName').value.trim(),
+    date:$('labDate').value,
+    purity:$('labPurity').value.trim(),
+    content:$('labContent').value.trim(),
+    report:$('labReport').value.trim(),
+    notes:$('labNotes').value.trim(),
+    updated:new Date().toISOString()
+  };
+  const idx=labEntries.findIndex(i=>i.id===id);
+  if(idx>=0) labEntries[idx]=obj; else labEntries.unshift(obj);
+  saveLabs(); closeLabForm();
+}
+function renderLabs(){
+  if(!$('labsList')) return;
+  const q=($('labSearch')?.value||'').toLowerCase().trim();
+  const rows=labEntries.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  if(!rows.length){
+    $('labsList').innerHTML='<div class="lab-empty">No lab tests saved yet.<br><span style="font-size:12px">Tap + Add Test to save your first result.</span></div>';
+    return;
+  }
+  $('labsList').innerHTML=rows.map(x=>`
+    <div class="lab-card">
+      <div class="lab-top">
+        <div>
+          <div class="lab-title">${esc(x.peptide)}</div>
+          <div class="lab-sub">${x.batch?'Batch '+esc(x.batch):'No batch'}${x.lab?' • '+esc(x.lab):''}</div>
+        </div>
+        ${x.purity?`<span class="pill accent">${esc(x.purity)}% purity</span>`:''}
+      </div>
+      <div class="lab-grid">
+        ${x.date?`<div class="lab-detail"><span>Test date</span><b>${fmt(x.date)}</b></div>`:''}
+        ${x.content?`<div class="lab-detail"><span>Tested content</span><b>${esc(x.content)}</b></div>`:''}
+        ${x.report?`<div class="lab-detail"><span>Report / COA</span><b>${esc(x.report)}</b></div>`:''}
+        ${x.lab?`<div class="lab-detail"><span>Lab</span><b>${esc(x.lab)}</b></div>`:''}
+      </div>
+      ${x.notes?`<div class="meta" style="margin-top:11px">${esc(x.notes)}</div>`:''}
+      <div class="lab-actions">
+        <button class="btn secondary labEdit" data-id="${esc(x.id)}">Edit</button>
+        <button class="btn danger labDelete" data-id="${esc(x.id)}">Delete</button>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.labEdit').forEach(b=>b.onclick=()=>openLabForm(b.dataset.id));
+  document.querySelectorAll('.labDelete').forEach(b=>b.onclick=()=>{
+    if(confirm('Delete this lab test?')){
+      labEntries=labEntries.filter(i=>i.id!==b.dataset.id);
+      saveLabs();
+    }
+  });
+}
+$('addLabBtn').onclick=()=>openLabForm();
+$('closeLabBtn').onclick=closeLabForm;
+$('cancelLabBtn').onclick=closeLabForm;
+$('saveLabBtn').onclick=saveLabEntry;
+$('labModal').onclick=e=>{if(e.target===$('labModal'))closeLabForm()};
+$('labSearch').addEventListener('input',renderLabs);
+renderLabs();
+
 </script>
+
+<div class="modal" id="labModal">
+  <div class="sheet">
+    <div class="sheethead">
+      <h2 id="labFormTitle">Add Test</h2>
+      <button class="btn secondary" id="closeLabBtn">Close</button>
+    </div>
+    <input type="hidden" id="labEditId">
+    <div class="grid">
+      <div><label>Peptide</label><input id="labPeptide" placeholder="e.g. RT60"></div>
+      <div><label>Batch / lot</label><input id="labBatch" placeholder="Optional"></div>
+      <div><label>Testing lab</label><input id="labName" placeholder="Lab name"></div>
+      <div><label>Test date</label><input id="labDate" type="date"></div>
+      <div><label>Purity %</label><input id="labPurity" type="number" min="0" max="100" step="0.01" inputmode="decimal" placeholder="e.g. 99.4"></div>
+      <div><label>Tested content / quantity</label><input id="labContent" placeholder="e.g. 59.8 mg"></div>
+      <div class="full"><label>Report / COA reference</label><input id="labReport" placeholder="Report ID, file name, URL note, etc."></div>
+      <div class="full"><label>Notes</label><textarea id="labNotes" placeholder="Anything you want to remember about this test"></textarea></div>
+    </div>
+    <div class="toolbar" style="margin-top:14px">
+      <button class="btn primary" id="saveLabBtn">Save Test</button>
+      <button class="btn secondary" id="cancelLabBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
