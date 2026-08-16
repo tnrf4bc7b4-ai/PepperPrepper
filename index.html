@@ -1,202 +1,285 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#121826" />
-<title>My Peptide Tracker</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Peptide Tracker">
+<title>Peptide Tracker</title>
 <style>
 :root{
-  --bg:#0b1020;--card:#151c2f;--muted:#94a3b8;--text:#f8fafc;--line:#26334f;
-  --accent:#60a5fa;--accent2:#34d399;--danger:#fb7185;--input:#0f172a;
+  --accent:#7c9cff;--accent-rgb:124,156,255;--bg:#080d18;--panel:#111827;
+  --panel2:#172033;--input:#0c1425;--line:#26324a;--text:#f7f9fc;--muted:#94a3b8;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1020,#0a1224 50%,#0b1020);color:var(--text);min-height:100vh}
-.wrap{max-width:820px;margin:auto;padding:20px 14px 90px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 2px 18px}
-h1{font-size:27px;margin:0} .sub{color:var(--muted);font-size:13px;margin-top:4px}
-.card{background:rgba(21,28,47,.96);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 8px 30px rgba(0,0,0,.18)}
-.toolbar{display:flex;gap:9px;flex-wrap:wrap}
-button,.btn{border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:650;cursor:pointer}
-.primary{background:var(--accent);color:#07101f}.secondary{background:#22304d;color:#eef2ff}.danger{background:#3a1d2b;color:#fecdd3}
-input,select,textarea{width:100%;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:16px;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-textarea{min-height:90px;resize:vertical}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-label{display:block;color:#cbd5e1;font-size:12px;margin:3px 0 6px;font-weight:650}
-.full{grid-column:1/-1}
-.search{margin-bottom:12px}
-.item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
-.item h3{margin:0 0 5px;font-size:19px}
-.meta{font-size:13px;color:var(--muted);line-height:1.55}
-.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
-.pill{display:inline-flex;padding:5px 8px;border-radius:999px;background:#1e2a45;color:#cbd5e1;font-size:12px}
-.pill.good{background:#13372f;color:#a7f3d0}.pill.warn{background:#3b2c12;color:#fde68a}
-.actions{display:flex;gap:7px;flex-direction:column}
-.actions button{padding:8px 10px;font-size:13px}
-.empty{text-align:center;color:var(--muted);padding:24px 10px}
-footer{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.5}
-.modal{display:none;position:fixed;inset:0;background:rgba(3,7,18,.72);z-index:20;align-items:flex-end;justify-content:center}
-.modal.show{display:flex}
-.sheet{background:#111827;width:min(820px,100%);max-height:92vh;overflow:auto;border:1px solid var(--line);border-radius:22px 22px 0 0;padding:17px 14px 28px}
-.sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.sheethead h2{margin:0;font-size:21px}
-.close{background:#25304a;color:white;padding:8px 12px}
-.topbadge{font-size:12px;background:#163047;color:#bfdbfe;border-radius:999px;padding:7px 9px;white-space:nowrap}
-@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.actions{flex-direction:row}.item{grid-template-columns:1fr}.actions button{flex:1}}
+html{background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--text);font-family:var(--font);
+background:radial-gradient(circle at 80% -10%,rgba(var(--accent-rgb),.17),transparent 34%),
+linear-gradient(180deg,#0c1324,var(--bg) 44%)}
+button,input,select,textarea{font:inherit}
+.app{max-width:760px;margin:auto;padding:calc(16px + env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom))}
+.hero{display:flex;align-items:center;gap:14px;padding:3px 2px 17px}
+.logo{width:58px;height:58px;border-radius:18px;background:var(--accent);display:grid;place-items:center}
+.logo svg{width:38px;height:38px;color:#08101d}
+.hero h1{font-size:28px;margin:0;letter-spacing:-.6px}.hero p{font-size:13px;color:var(--muted);margin:4px 0 0}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px;background:rgba(12,20,37,.94);
+border:1px solid var(--line);border-radius:16px;position:sticky;top:7px;z-index:10;backdrop-filter:blur(14px)}
+.tab{border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:750;padding:10px 2px;border-radius:11px}
+.tab.active{background:var(--accent);color:#08101d}
+.view{display:none;margin-top:14px}.view.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.metric{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:13px}
+.metric span{display:block;color:var(--muted);font-size:12px}.metric b{display:block;font-size:26px;margin-top:3px}
+.card{background:rgba(17,24,39,.96);border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:12px}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sectionhead h2{font-size:18px;margin:0}.sectionhead small{font-size:11px;color:var(--muted)}
+.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:750}.primary{background:var(--accent);color:#08101d}
+.secondary{background:#202b42;color:var(--text)}.danger{background:#3a1d29;color:#ffd0d7}
+.quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.quick{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:15px;padding:13px;text-align:left}
+.quick strong{display:block;font-size:14px}.quick span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:var(--input);color:var(--text);
+border-radius:12px;padding:11px 12px;font-size:16px;outline:none}
+textarea{min-height:95px;resize:vertical}
+label{display:block;font-size:12px;font-weight:700;color:#cbd5e1;margin:2px 0 6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:13px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}.item h3{font-size:18px;margin:0 0 4px}.meta{font-size:13px;line-height:1.55;color:var(--muted)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pill{background:#1e2940;border-radius:999px;padding:5px 8px;font-size:11px;color:#d6deeb}
+.pill.accent{background:rgba(var(--accent-rgb),.16);color:#e4e9ff}.actions{display:flex;gap:6px;align-items:flex-start}
+.actions .btn{font-size:12px;padding:7px 9px}.empty{text-align:center;color:var(--muted);padding:27px 8px}
+.note{border-left:3px solid var(--accent);background:rgba(var(--accent-rgb),.08);padding:9px 11px;border-radius:0 11px 11px 0;margin:8px 0}
+.note b{display:block}.note small{color:var(--muted)}
+.vendorRow,.testRow{padding:12px 0;border-top:1px solid var(--line)}.vendorRow:first-child,.testRow:first-child{border-top:0}
+.vendorRow b,.testRow b{display:block}.vendorRow small,.testRow small{color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;background:rgba(3,7,18,.78);z-index:30;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}.sheet{width:min(760px,100%);max-height:92vh;overflow:auto;background:#0f1728;border:1px solid var(--line);
+border-radius:22px 22px 0 0;padding:16px 14px calc(26px + env(safe-area-inset-bottom))}
+.sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.sheethead h2{margin:0;font-size:20px}
+.swatches{display:flex;gap:9px;flex-wrap:wrap}.swatch{width:36px;height:36px;border-radius:50%;border:2px solid transparent}
+.swatch.active{outline:2px solid white;outline-offset:2px}.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;line-height:1.5;margin:20px 12px 0}
+@media(max-width:560px){
+ .hero h1{font-size:25px}.metrics{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}
+ .grid,.settings{grid-template-columns:1fr}.full{grid-column:auto}.item{grid-template-columns:1fr}.actions{justify-content:flex-start}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div>
-    <h1>My Peptide Tracker</h1>
-    <div class="sub">Private inventory & reference notes • stored on this device</div>
-  </div>
-  <div class="topbadge" id="countBadge">0 items</div>
+<div class="app">
+<header class="hero">
+<div class="logo"><svg viewBox="0 0 64 64" fill="none"><rect x="22" y="7" width="20" height="9" rx="3" fill="currentColor"/><rect x="18" y="15" width="28" height="40" rx="9" fill="none" stroke="currentColor" stroke-width="3"/><path d="M22 38c7-6 14 5 20-1v10c0 3-3 5-6 5h-8c-3 0-6-2-6-5V38Z" fill="currentColor"/><path d="M27 25h10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+<div><h1>Peptide Tracker</h1><p>Inventory • vendors • testing • notes</p></div>
 </header>
 
+<nav class="tabs">
+<button class="tab active" data-tab="home">Home</button>
+<button class="tab" data-tab="inventory">Inventory</button>
+<button class="tab" data-tab="vendors">Vendors</button>
+<button class="tab" data-tab="testing">Testing</button>
+<button class="tab" data-tab="notes">Notes</button>
+</nav>
+
+<section id="home" class="view active">
+<div class="metrics">
+<div class="metric"><span>Peptides</span><b id="metricItems">0</b></div>
+<div class="metric"><span>Total vials</span><b id="metricVials">0</b></div>
+<div class="metric"><span>Vendors</span><b id="metricVendors">0</b></div>
+</div>
+
 <div class="card">
-  <div class="toolbar">
-    <button class="primary" onclick="openForm()">+ Add peptide</button>
-    <button class="secondary" onclick="exportData()">Export backup</button>
-    <label class="btn secondary" style="margin:0">
-      Import backup
-      <input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)">
-    </label>
-  </div>
+<div class="sectionhead"><h2>Quick actions</h2></div>
+<div class="quickgrid">
+<button class="quick" id="quickAdd"><strong>＋ Add inventory</strong><span>Add a peptide or batch</span></button>
+<button class="quick" id="quickTesting"><strong>⌁ Testing</strong><span>See COA references</span></button>
+<button class="quick" id="quickVendors"><strong>◇ Vendors</strong><span>See represented sources</span></button>
+<button class="quick" id="quickBackup"><strong>⇩ Backup</strong><span>Export your data</span></button>
+</div>
 </div>
 
-<div class="search">
-  <input id="search" placeholder="Search name, vendor, batch, notes…" oninput="render()">
+<div class="card"><div class="sectionhead"><h2>Recently updated</h2></div><div id="recentList"></div></div>
+</section>
+
+<section id="inventory" class="view">
+<div class="card">
+<div class="sectionhead"><h2>Inventory</h2><button class="btn primary" id="addBtn">+ Add</button></div>
+<input id="search" placeholder="Search name, vendor, batch, notes…">
+<div id="inventoryList"></div>
+</div>
+</section>
+
+<section id="vendors" class="view">
+<div class="card"><div class="sectionhead"><h2>Vendors</h2><small>generated from inventory</small></div><div id="vendorList"></div></div>
+</section>
+
+<section id="testing" class="view">
+<div class="card"><div class="sectionhead"><h2>Testing / COA references</h2></div><div id="testingList"></div></div>
+</section>
+
+<section id="notes" class="view">
+<div class="card">
+<div class="sectionhead"><h2>General notes</h2><button class="btn primary" id="saveGeneralNotes">Save</button></div>
+<textarea id="generalNotes" placeholder="General reminders, freezer organization, vendor notes, questions to research, etc."></textarea>
 </div>
 
-<div id="list"></div>
-
-<footer>
-This tool is for personal organization and recordkeeping. It does not verify identity, purity, safety, sterility, legality, or medical suitability of any product.
-</footer>
+<div class="card">
+<div class="sectionhead"><h2>Appearance</h2></div>
+<div class="settings">
+<div><label>Accent color</label><div class="swatches">
+<button class="swatch" data-color="#7c9cff" data-rgb="124,156,255" style="background:#7c9cff"></button>
+<button class="swatch" data-color="#54d6b4" data-rgb="84,214,180" style="background:#54d6b4"></button>
+<button class="swatch" data-color="#c18cff" data-rgb="193,140,255" style="background:#c18cff"></button>
+<button class="swatch" data-color="#ff9c73" data-rgb="255,156,115" style="background:#ff9c73"></button>
+</div></div>
+<div><label for="fontChoice">Font</label><select id="fontChoice">
+<option value="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">iPhone / Clean</option>
+<option value="Arial,Helvetica,sans-serif">Arial</option>
+<option value="Georgia,'Times New Roman',serif">Classic</option>
+<option value="'Courier New',monospace">Technical</option>
+</select></div>
 </div>
 
-<div class="modal" id="modal" onclick="if(event.target===this) closeForm()">
-  <div class="sheet">
-    <div class="sheethead">
-      <h2 id="formTitle">Add peptide</h2>
-      <button class="close" onclick="closeForm()">Close</button>
-    </div>
-    <form id="form" onsubmit="saveItem(event)">
-      <input type="hidden" id="editId">
-      <div class="grid">
-        <div><label>Peptide / label name</label><input id="name" required placeholder="e.g. RT60"></div>
-        <div><label>Full name / description</label><input id="fullname" placeholder="Optional"></div>
-        <div><label>Vendor / source</label><input id="vendor" placeholder="Optional"></div>
-        <div><label>Batch / lot</label><input id="batch" placeholder="Optional"></div>
-        <div><label>Vial labeled amount</label><input id="amount" placeholder="e.g. 60 mg"></div>
-        <div><label>Quantity of vials</label><input id="qty" type="number" min="0" step="1" placeholder="e.g. 10"></div>
-        <div><label>Date received</label><input id="received" type="date"></div>
-        <div><label>MFG / label date</label><input id="mfg" type="date"></div>
-        <div><label>Storage</label>
-          <select id="storage">
-            <option value="">Not specified</option>
-            <option>Freezer</option><option>Refrigerator</option><option>Room temperature</option><option>Other</option>
-          </select>
-        </div>
-        <div><label>Status</label>
-          <select id="status">
-            <option>Unopened</option><option>Opened / in use</option><option>Finished</option><option>Archived</option>
-          </select>
-        </div>
-        <div><label>Testing / COA reference</label><input id="coa" placeholder="Lab, report ID, result note, etc."></div>
-        <div><label>Order / tracking reference</label><input id="order" placeholder="Optional"></div>
-        <div class="full"><label>Notes</label><textarea id="notes" placeholder="Appearance, label details, storage note, source notes, etc."></textarea></div>
-      </div>
-      <div class="toolbar" style="margin-top:14px">
-        <button class="primary" type="submit">Save</button>
-        <button class="secondary" type="button" onclick="closeForm()">Cancel</button>
-      </div>
-    </form>
-  </div>
+<div class="toolbar" style="margin-top:14px">
+<button class="btn secondary" id="exportBtn">Export backup</button>
+<label class="btn secondary">Import backup<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+</div>
+</div>
+</section>
+
+<footer>Personal organization and recordkeeping only. This app does not verify product identity, purity, sterility, safety, legality, or medical suitability.</footer>
+</div>
+
+<div class="modal" id="modal">
+<div class="sheet">
+<div class="sheethead"><h2 id="formTitle">Add inventory</h2><button class="btn secondary" id="closeBtn">Close</button></div>
+<input type="hidden" id="editId">
+<div class="grid">
+<div><label>Peptide / label name</label><input id="name" placeholder="e.g. RT60"></div>
+<div><label>Full name / description</label><input id="fullname" placeholder="Optional"></div>
+<div><label>Vendor / source</label><input id="vendor" placeholder="Optional"></div>
+<div><label>Batch / lot</label><input id="batch" placeholder="Optional"></div>
+<div><label>Vial labeled amount</label><input id="amount" placeholder="e.g. 60 mg"></div>
+<div><label>Quantity of vials</label><input id="qty" type="number" min="0" step="1" placeholder="e.g. 10"></div>
+<div><label>Date received</label><input id="received" type="date"></div>
+<div><label>MFG / label date</label><input id="mfg" type="date"></div>
+<div><label>Storage</label><select id="storage"><option value="">Not specified</option><option>Freezer</option><option>Refrigerator</option><option>Room temperature</option><option>Other</option></select></div>
+<div><label>Status</label><select id="status"><option>Unopened</option><option>Opened / in use</option><option>Finished</option><option>Archived</option></select></div>
+<div><label>Testing / COA reference</label><input id="coa" placeholder="Lab, report ID, result note, etc."></div>
+<div><label>Order / tracking reference</label><input id="order" placeholder="Optional"></div>
+<div class="full"><label>Notes</label><textarea id="itemNotes" placeholder="Appearance, label details, storage note, source notes, etc."></textarea></div>
+</div>
+<div class="toolbar" style="margin-top:14px"><button class="btn primary" id="saveItemBtn">Save</button><button class="btn secondary" id="cancelBtn">Cancel</button></div>
+</div>
 </div>
 
 <script>
-const KEY='myPeptideTracker_v1';
-let items = JSON.parse(localStorage.getItem(KEY)||'[]');
+const OLD_KEY='myPeptideTracker_v1', KEY='myPeptideTracker_v2', NOTES_KEY='myPeptideTracker_notes', SETTINGS_KEY='myPeptideTracker_settings';
+let items=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!items){items=JSON.parse(localStorage.getItem(OLD_KEY)||'[]');localStorage.setItem(KEY,JSON.stringify(items))}
+let settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null')||{color:'#7c9cff',rgb:'124,156,255',font:"-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString():'';
 
-function persist(){localStorage.setItem(KEY,JSON.stringify(items)); render();}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
-function fmt(d){if(!d)return''; const x=new Date(d+'T12:00:00'); return x.toLocaleDateString();}
+function applySettings(){
+ document.documentElement.style.setProperty('--accent',settings.color);
+ document.documentElement.style.setProperty('--accent-rgb',settings.rgb);
+ document.documentElement.style.setProperty('--font',settings.font);
+ $('fontChoice').value=settings.font;
+ document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('active',s.dataset.color===settings.color));
+}
+function persist(){localStorage.setItem(KEY,JSON.stringify(items));renderAll()}
+function switchTab(id){
+ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+ window.scrollTo({top:0,behavior:'smooth'})
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+function itemHtml(x){
+ const lines=[x.fullname&&esc(x.fullname),x.vendor&&'Vendor: '+esc(x.vendor),x.batch&&'Batch: '+esc(x.batch),
+ x.received&&'Received: '+fmt(x.received),x.mfg&&'MFG: '+fmt(x.mfg),x.coa&&'Testing: '+esc(x.coa),
+ (x.itemNotes||x.notes)&&'Notes: '+esc(x.itemNotes||x.notes)].filter(Boolean).join('<br>');
+ const pills=[x.amount&&`<span class="pill accent">${esc(x.amount)}</span>`,
+ x.qty&&`<span class="pill">${esc(x.qty)} vial${String(x.qty)==='1'?'':'s'}</span>`,
+ x.storage&&`<span class="pill">${esc(x.storage)}</span>`,x.status&&`<span class="pill">${esc(x.status)}</span>`].filter(Boolean).join('');
+ return `<div class="item"><div><h3>${esc(x.name||'Unnamed')}</h3><div class="meta">${lines||'No extra details yet.'}</div><div class="pills">${pills}</div></div>
+ <div class="actions"><button class="btn secondary editBtn" data-id="${esc(x.id)}">Edit</button><button class="btn danger deleteBtn" data-id="${esc(x.id)}">Delete</button></div></div>`;
+}
+function bindButtons(){
+ document.querySelectorAll('.editBtn').forEach(b=>b.onclick=()=>openForm(b.dataset.id));
+ document.querySelectorAll('.deleteBtn').forEach(b=>b.onclick=()=>{if(confirm('Delete this entry?')){items=items.filter(i=>i.id!==b.dataset.id);persist()}});
+}
+function renderAll(){
+ $('metricItems').textContent=items.length;
+ $('metricVials').textContent=items.reduce((n,x)=>n+(parseInt(x.qty)||0),0);
+ const vendors=[...new Set(items.map(x=>x.vendor).filter(Boolean))];
+ $('metricVendors').textContent=vendors.length;
+
+ const q=$('search').value.toLowerCase().trim();
+ const filtered=items.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+ $('inventoryList').innerHTML=filtered.length?filtered.map(itemHtml).join(''):'<div class="empty">No inventory entries yet.</div>';
+ bindButtons();
+
+ const recent=[...items].sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).slice(0,4);
+ $('recentList').innerHTML=recent.length?recent.map(x=>`<div class="note"><b>${esc(x.name||'Unnamed')}</b><small>${esc(x.vendor||'No vendor')} · ${esc(x.qty||0)} vial${String(x.qty)==='1'?'':'s'}${x.batch?' · Batch '+esc(x.batch):''}</small></div>`).join(''):'<div class="empty">Nothing here yet.</div>';
+
+ const map={}; items.forEach(x=>{if(!x.vendor)return;if(!map[x.vendor])map[x.vendor]={count:0,vials:0,names:new Set()};map[x.vendor].count++;map[x.vendor].vials+=parseInt(x.qty)||0;if(x.name)map[x.vendor].names.add(x.name)});
+ const rows=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0]));
+ $('vendorList').innerHTML=rows.length?rows.map(([name,v])=>`<div class="vendorRow"><b>${esc(name)}</b><small>${v.count} entr${v.count===1?'y':'ies'} · ${v.vials} vial${v.vials===1?'':'s'} · ${esc([...v.names].join(', '))}</small></div>`).join(''):'<div class="empty">Add vendor names to inventory and they will appear here.</div>';
+
+ const tested=items.filter(x=>x.coa);
+ $('testingList').innerHTML=tested.length?tested.map(x=>`<div class="testRow"><b>${esc(x.name||'Unnamed')}${x.batch?' · '+esc(x.batch):''}</b><small>${esc(x.coa)}${x.vendor?' · '+esc(x.vendor):''}</small></div>`).join(''):'<div class="empty">No testing / COA references recorded yet.</div>';
+}
 function openForm(id){
-  document.getElementById('form').reset();
-  document.getElementById('editId').value='';
-  document.getElementById('status').value='Unopened';
-  document.getElementById('formTitle').textContent='Add peptide';
-  if(id){
-    const x=items.find(i=>i.id===id); if(!x)return;
-    document.getElementById('formTitle').textContent='Edit peptide';
-    ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order','notes'].forEach(k=>document.getElementById(k).value=x[k]??'');
-    document.getElementById('editId').value=id;
-  }
-  document.getElementById('modal').classList.add('show');
+ ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order','itemNotes'].forEach(f=>$(f).value='');
+ $('status').value='Unopened';$('editId').value='';$('formTitle').textContent='Add inventory';
+ if(id){
+  const x=items.find(i=>i.id===id); if(!x)return;
+  $('formTitle').textContent='Edit inventory';$('editId').value=id;
+  ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order'].forEach(f=>$(f).value=x[f]??'');
+  $('itemNotes').value=x.itemNotes??x.notes??'';
+ }
+ $('modal').classList.add('show');
 }
-function closeForm(){document.getElementById('modal').classList.remove('show');}
-function saveItem(e){
-  e.preventDefault();
-  const id=document.getElementById('editId').value || (crypto.randomUUID?crypto.randomUUID():Date.now().toString());
-  const obj={id,updated:new Date().toISOString()};
-  ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order','notes'].forEach(k=>obj[k]=document.getElementById(k).value.trim());
-  const idx=items.findIndex(i=>i.id===id);
-  if(idx>=0) items[idx]=obj; else items.unshift(obj);
-  persist(); closeForm();
-}
-function removeItem(id){
-  if(confirm('Delete this entry?')){items=items.filter(i=>i.id!==id); persist();}
-}
-function render(){
-  const q=document.getElementById('search').value.toLowerCase().trim();
-  const data=items.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
-  document.getElementById('countBadge').textContent=`${items.length} item${items.length===1?'':'s'}`;
-  const list=document.getElementById('list');
-  if(!data.length){list.innerHTML='<div class="card empty">'+(items.length?'No matches.':'No peptides added yet.')+'</div>';return;}
-  list.innerHTML=data.map(x=>{
-    const pills=[
-      x.amount&&`<span class="pill">${esc(x.amount)}</span>`,
-      x.qty&&`<span class="pill">${esc(x.qty)} vial${x.qty==='1'?'':'s'}</span>`,
-      x.storage&&`<span class="pill">${esc(x.storage)}</span>`,
-      x.status&&`<span class="pill ${x.status==='Unopened'?'good':''}">${esc(x.status)}</span>`
-    ].filter(Boolean).join('');
-    const lines=[
-      x.fullname&&esc(x.fullname),
-      x.vendor&&`Vendor: ${esc(x.vendor)}`,
-      x.batch&&`Batch: ${esc(x.batch)}`,
-      x.received&&`Received: ${fmt(x.received)}`,
-      x.mfg&&`MFG/label date: ${fmt(x.mfg)}`,
-      x.coa&&`Testing/COA: ${esc(x.coa)}`,
-      x.order&&`Order/tracking: ${esc(x.order)}`,
-      x.notes&&`Notes: ${esc(x.notes)}`
-    ].filter(Boolean).join('<br>');
-    return `<div class="card item">
-      <div><h3>${esc(x.name)}</h3><div class="meta">${lines||'No extra details yet.'}</div><div class="pills">${pills}</div></div>
-      <div class="actions"><button class="secondary" onclick="openForm('${x.id}')">Edit</button><button class="danger" onclick="removeItem('${x.id}')">Delete</button></div>
-    </div>`;
-  }).join('');
+function closeForm(){$('modal').classList.remove('show')}
+function saveItem(){
+ if(!$('name').value.trim()){alert('Add a peptide / label name first.');return}
+ const id=$('editId').value||(crypto.randomUUID?crypto.randomUUID():String(Date.now()));
+ const obj={id,updated:new Date().toISOString()};
+ ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order'].forEach(f=>obj[f]=$(f).value.trim());
+ obj.itemNotes=$('itemNotes').value.trim();obj.notes=obj.itemNotes;
+ const idx=items.findIndex(i=>i.id===id); if(idx>=0)items[idx]=obj;else items.unshift(obj);
+ persist();closeForm()
 }
 function exportData(){
-  const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),items},null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='peptide-tracker-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
+ const payload={version:2,exported:new Date().toISOString(),items,generalNotes:$('generalNotes').value,settings};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='peptide-tracker-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)
 }
-function importData(e){
-  const f=e.target.files[0]; if(!f)return;
-  const r=new FileReader(); r.onload=()=>{
-    try{
-      const d=JSON.parse(r.result); const incoming=Array.isArray(d)?d:d.items;
-      if(!Array.isArray(incoming)) throw 0;
-      if(confirm(`Import ${incoming.length} items? This will replace the current list.`)){items=incoming;persist();}
-    }catch{alert('That file does not look like a valid tracker backup.');}
-    e.target.value='';
-  }; r.readAsText(f);
-}
-render();
+
+$('search').addEventListener('input',renderAll);
+$('addBtn').onclick=()=>openForm();$('quickAdd').onclick=()=>openForm();
+$('quickTesting').onclick=()=>switchTab('testing');$('quickVendors').onclick=()=>switchTab('vendors');
+$('quickBackup').onclick=exportData;$('exportBtn').onclick=exportData;
+$('closeBtn').onclick=closeForm;$('cancelBtn').onclick=closeForm;$('saveItemBtn').onclick=saveItem;
+$('modal').onclick=e=>{if(e.target===$('modal'))closeForm()};
+$('generalNotes').value=localStorage.getItem(NOTES_KEY)||'';
+$('saveGeneralNotes').onclick=()=>{localStorage.setItem(NOTES_KEY,$('generalNotes').value);alert('Notes saved on this device.')};
+document.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{settings.color=s.dataset.color;settings.rgb=s.dataset.rgb;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()});
+$('fontChoice').onchange=e=>{settings.font=e.target.value;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()};
+$('importFile').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);const incoming=Array.isArray(d)?d:d.items;if(!Array.isArray(incoming))throw 0;
+ if(confirm(`Import ${incoming.length} entries? This replaces the current inventory.`)){items=incoming;localStorage.setItem(KEY,JSON.stringify(items));if(d.generalNotes!==undefined){$('generalNotes').value=d.generalNotes;localStorage.setItem(NOTES_KEY,d.generalNotes)}
+ if(d.settings){settings=d.settings;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()}renderAll()}}catch{alert('Invalid backup file.')}e.target.value=''};
+ r.readAsText(f)
+};
+applySettings();renderAll();
 </script>
 </body>
 </html>
