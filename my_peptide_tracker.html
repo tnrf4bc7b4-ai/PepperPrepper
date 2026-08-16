@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#121826" />
+<title>My Peptide Tracker</title>
+<style>
+:root{
+  --bg:#0b1020;--card:#151c2f;--muted:#94a3b8;--text:#f8fafc;--line:#26334f;
+  --accent:#60a5fa;--accent2:#34d399;--danger:#fb7185;--input:#0f172a;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1020,#0a1224 50%,#0b1020);color:var(--text);min-height:100vh}
+.wrap{max-width:820px;margin:auto;padding:20px 14px 90px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 2px 18px}
+h1{font-size:27px;margin:0} .sub{color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:rgba(21,28,47,.96);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap}
+button,.btn{border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:650;cursor:pointer}
+.primary{background:var(--accent);color:#07101f}.secondary{background:#22304d;color:#eef2ff}.danger{background:#3a1d2b;color:#fecdd3}
+input,select,textarea{width:100%;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:16px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:90px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;color:#cbd5e1;font-size:12px;margin:3px 0 6px;font-weight:650}
+.full{grid-column:1/-1}
+.search{margin-bottom:12px}
+.item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.item h3{margin:0 0 5px;font-size:19px}
+.meta{font-size:13px;color:var(--muted);line-height:1.55}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.pill{display:inline-flex;padding:5px 8px;border-radius:999px;background:#1e2a45;color:#cbd5e1;font-size:12px}
+.pill.good{background:#13372f;color:#a7f3d0}.pill.warn{background:#3b2c12;color:#fde68a}
+.actions{display:flex;gap:7px;flex-direction:column}
+.actions button{padding:8px 10px;font-size:13px}
+.empty{text-align:center;color:var(--muted);padding:24px 10px}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.5}
+.modal{display:none;position:fixed;inset:0;background:rgba(3,7,18,.72);z-index:20;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.sheet{background:#111827;width:min(820px,100%);max-height:92vh;overflow:auto;border:1px solid var(--line);border-radius:22px 22px 0 0;padding:17px 14px 28px}
+.sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sheethead h2{margin:0;font-size:21px}
+.close{background:#25304a;color:white;padding:8px 12px}
+.topbadge{font-size:12px;background:#163047;color:#bfdbfe;border-radius:999px;padding:7px 9px;white-space:nowrap}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.actions{flex-direction:row}.item{grid-template-columns:1fr}.actions button{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>My Peptide Tracker</h1>
+    <div class="sub">Private inventory & reference notes • stored on this device</div>
+  </div>
+  <div class="topbadge" id="countBadge">0 items</div>
+</header>
+
+<div class="card">
+  <div class="toolbar">
+    <button class="primary" onclick="openForm()">+ Add peptide</button>
+    <button class="secondary" onclick="exportData()">Export backup</button>
+    <label class="btn secondary" style="margin:0">
+      Import backup
+      <input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)">
+    </label>
+  </div>
+</div>
+
+<div class="search">
+  <input id="search" placeholder="Search name, vendor, batch, notes…" oninput="render()">
+</div>
+
+<div id="list"></div>
+
+<footer>
+This tool is for personal organization and recordkeeping. It does not verify identity, purity, safety, sterility, legality, or medical suitability of any product.
+</footer>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this) closeForm()">
+  <div class="sheet">
+    <div class="sheethead">
+      <h2 id="formTitle">Add peptide</h2>
+      <button class="close" onclick="closeForm()">Close</button>
+    </div>
+    <form id="form" onsubmit="saveItem(event)">
+      <input type="hidden" id="editId">
+      <div class="grid">
+        <div><label>Peptide / label name</label><input id="name" required placeholder="e.g. RT60"></div>
+        <div><label>Full name / description</label><input id="fullname" placeholder="Optional"></div>
+        <div><label>Vendor / source</label><input id="vendor" placeholder="Optional"></div>
+        <div><label>Batch / lot</label><input id="batch" placeholder="Optional"></div>
+        <div><label>Vial labeled amount</label><input id="amount" placeholder="e.g. 60 mg"></div>
+        <div><label>Quantity of vials</label><input id="qty" type="number" min="0" step="1" placeholder="e.g. 10"></div>
+        <div><label>Date received</label><input id="received" type="date"></div>
+        <div><label>MFG / label date</label><input id="mfg" type="date"></div>
+        <div><label>Storage</label>
+          <select id="storage">
+            <option value="">Not specified</option>
+            <option>Freezer</option><option>Refrigerator</option><option>Room temperature</option><option>Other</option>
+          </select>
+        </div>
+        <div><label>Status</label>
+          <select id="status">
+            <option>Unopened</option><option>Opened / in use</option><option>Finished</option><option>Archived</option>
+          </select>
+        </div>
+        <div><label>Testing / COA reference</label><input id="coa" placeholder="Lab, report ID, result note, etc."></div>
+        <div><label>Order / tracking reference</label><input id="order" placeholder="Optional"></div>
+        <div class="full"><label>Notes</label><textarea id="notes" placeholder="Appearance, label details, storage note, source notes, etc."></textarea></div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="primary" type="submit">Save</button>
+        <button class="secondary" type="button" onclick="closeForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const KEY='myPeptideTracker_v1';
+let items = JSON.parse(localStorage.getItem(KEY)||'[]');
+
+function persist(){localStorage.setItem(KEY,JSON.stringify(items)); render();}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function fmt(d){if(!d)return''; const x=new Date(d+'T12:00:00'); return x.toLocaleDateString();}
+function openForm(id){
+  document.getElementById('form').reset();
+  document.getElementById('editId').value='';
+  document.getElementById('status').value='Unopened';
+  document.getElementById('formTitle').textContent='Add peptide';
+  if(id){
+    const x=items.find(i=>i.id===id); if(!x)return;
+    document.getElementById('formTitle').textContent='Edit peptide';
+    ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order','notes'].forEach(k=>document.getElementById(k).value=x[k]??'');
+    document.getElementById('editId').value=id;
+  }
+  document.getElementById('modal').classList.add('show');
+}
+function closeForm(){document.getElementById('modal').classList.remove('show');}
+function saveItem(e){
+  e.preventDefault();
+  const id=document.getElementById('editId').value || (crypto.randomUUID?crypto.randomUUID():Date.now().toString());
+  const obj={id,updated:new Date().toISOString()};
+  ['name','fullname','vendor','batch','amount','qty','received','mfg','storage','status','coa','order','notes'].forEach(k=>obj[k]=document.getElementById(k).value.trim());
+  const idx=items.findIndex(i=>i.id===id);
+  if(idx>=0) items[idx]=obj; else items.unshift(obj);
+  persist(); closeForm();
+}
+function removeItem(id){
+  if(confirm('Delete this entry?')){items=items.filter(i=>i.id!==id); persist();}
+}
+function render(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const data=items.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  document.getElementById('countBadge').textContent=`${items.length} item${items.length===1?'':'s'}`;
+  const list=document.getElementById('list');
+  if(!data.length){list.innerHTML='<div class="card empty">'+(items.length?'No matches.':'No peptides added yet.')+'</div>';return;}
+  list.innerHTML=data.map(x=>{
+    const pills=[
+      x.amount&&`<span class="pill">${esc(x.amount)}</span>`,
+      x.qty&&`<span class="pill">${esc(x.qty)} vial${x.qty==='1'?'':'s'}</span>`,
+      x.storage&&`<span class="pill">${esc(x.storage)}</span>`,
+      x.status&&`<span class="pill ${x.status==='Unopened'?'good':''}">${esc(x.status)}</span>`
+    ].filter(Boolean).join('');
+    const lines=[
+      x.fullname&&esc(x.fullname),
+      x.vendor&&`Vendor: ${esc(x.vendor)}`,
+      x.batch&&`Batch: ${esc(x.batch)}`,
+      x.received&&`Received: ${fmt(x.received)}`,
+      x.mfg&&`MFG/label date: ${fmt(x.mfg)}`,
+      x.coa&&`Testing/COA: ${esc(x.coa)}`,
+      x.order&&`Order/tracking: ${esc(x.order)}`,
+      x.notes&&`Notes: ${esc(x.notes)}`
+    ].filter(Boolean).join('<br>');
+    return `<div class="card item">
+      <div><h3>${esc(x.name)}</h3><div class="meta">${lines||'No extra details yet.'}</div><div class="pills">${pills}</div></div>
+      <div class="actions"><button class="secondary" onclick="openForm('${x.id}')">Edit</button><button class="danger" onclick="removeItem('${x.id}')">Delete</button></div>
+    </div>`;
+  }).join('');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),items},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='peptide-tracker-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result); const incoming=Array.isArray(d)?d:d.items;
+      if(!Array.isArray(incoming)) throw 0;
+      if(confirm(`Import ${incoming.length} items? This will replace the current list.`)){items=incoming;persist();}
+    }catch{alert('That file does not look like a valid tracker backup.');}
+    e.target.value='';
+  }; r.readAsText(f);
+}
+render();
+</script>
+</body>
+</html>
