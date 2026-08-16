@@ -414,6 +414,30 @@ footer::before{
 </div>
 </div>
 
+<div class="modal" id="labModal">
+  <div class="sheet">
+    <div class="sheethead">
+      <h2 id="labFormTitle">Add Test</h2>
+      <button class="btn secondary" id="closeLabBtn">Close</button>
+    </div>
+    <input type="hidden" id="labEditId">
+    <div class="grid">
+      <div><label>Peptide</label><input id="labPeptide" placeholder="e.g. RT60"></div>
+      <div><label>Batch / lot</label><input id="labBatch" placeholder="Optional"></div>
+      <div><label>Testing lab</label><input id="labName" placeholder="Lab name"></div>
+      <div><label>Test date</label><input id="labDate" type="date"></div>
+      <div><label>Purity %</label><input id="labPurity" type="number" min="0" max="100" step="0.01" inputmode="decimal" placeholder="e.g. 99.4"></div>
+      <div><label>Tested content / quantity</label><input id="labContent" placeholder="e.g. 59.8 mg"></div>
+      <div class="full"><label>Report / COA reference</label><input id="labReport" placeholder="Report ID, file name, URL note, etc."></div>
+      <div class="full"><label>Notes</label><textarea id="labNotes" placeholder="Anything you want to remember about this test"></textarea></div>
+    </div>
+    <div class="toolbar" style="margin-top:14px">
+      <button class="btn primary" id="saveLabBtn">Save Test</button>
+      <button class="btn secondary" id="cancelLabBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const OLD_KEY='myPeptideTracker_v1', KEY='myPeptideTracker_v2', NOTES_KEY='myPeptideTracker_notes', SETTINGS_KEY='myPeptideTracker_settings';
 let items=JSON.parse(localStorage.getItem(KEY)||'null');
@@ -496,9 +520,22 @@ function saveItem(){
  persist();closeForm()
 }
 function exportData(){
- const payload={version:2,exported:new Date().toISOString(),items,generalNotes:$('generalNotes').value,settings};
+ const labsForBackup = (typeof labEntries!=='undefined' && Array.isArray(labEntries)) ? labEntries : JSON.parse(localStorage.getItem('vialVault_labs_v1')||'[]');
+ const payload={
+   app:'Vial Vault',
+   version:3,
+   exported:new Date().toISOString(),
+   items:Array.isArray(items)?items:[],
+   labs:labsForBackup,
+   generalNotes:$('generalNotes')?.value ?? localStorage.getItem(NOTES_KEY) ?? '',
+   settings
+ };
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='peptide-tracker-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='vial-vault-backup-'+new Date().toISOString().slice(0,10)+'.json';
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 $('search').addEventListener('input',renderAll);
@@ -511,13 +548,7 @@ $('generalNotes').value=localStorage.getItem(NOTES_KEY)||'';
 $('saveGeneralNotes').onclick=()=>{localStorage.setItem(NOTES_KEY,$('generalNotes').value);alert('Notes saved on this device.')};
 document.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{settings.color=s.dataset.color;settings.rgb=s.dataset.rgb;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()});
 $('fontChoice').onchange=e=>{settings.font=e.target.value;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()};
-$('importFile').onchange=e=>{
- const f=e.target.files[0];if(!f)return;const r=new FileReader();
- r.onload=()=>{try{const d=JSON.parse(r.result);const incoming=Array.isArray(d)?d:d.items;if(!Array.isArray(incoming))throw 0;
- if(confirm(`Import ${incoming.length} entries? This replaces the current inventory.`)){items=incoming;localStorage.setItem(KEY,JSON.stringify(items));if(d.generalNotes!==undefined){$('generalNotes').value=d.generalNotes;localStorage.setItem(NOTES_KEY,d.generalNotes)}
- if(d.settings){settings=d.settings;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings()}renderAll()}}catch{alert('Invalid backup file.')}e.target.value=''};
- r.readAsText(f)
-};
+
 applySettings();renderAll();
 
 const LABS_KEY='vialVault_labs_v1';
@@ -604,39 +635,100 @@ function renderLabs(){
     }
   });
 }
-$('addLabBtn').onclick=()=>openLabForm();
-$('closeLabBtn').onclick=closeLabForm;
-$('cancelLabBtn').onclick=closeLabForm;
-$('saveLabBtn').onclick=saveLabEntry;
-$('labModal').onclick=e=>{if(e.target===$('labModal'))closeLabForm()};
-$('labSearch').addEventListener('input',renderLabs);
+if($('addLabBtn')) $('addLabBtn').onclick=()=>openLabForm();
+if($('closeLabBtn')) $('closeLabBtn').onclick=closeLabForm;
+if($('cancelLabBtn')) $('cancelLabBtn').onclick=closeLabForm;
+if($('saveLabBtn')) $('saveLabBtn').onclick=saveLabEntry;
+if($('labModal')) $('labModal').onclick=e=>{if(e.target===$('labModal'))closeLabForm()};
+if($('labSearch')) $('labSearch').addEventListener('input',renderLabs);
 renderLabs();
 
-</script>
+function normalizeBackup(raw){
+  // Current Vial Vault format
+  if(raw && typeof raw==='object' && Array.isArray(raw.items)){
+    return {
+      items:raw.items,
+      labs:Array.isArray(raw.labs)?raw.labs:[],
+      generalNotes:raw.generalNotes ?? '',
+      settings:raw.settings ?? null
+    };
+  }
+  // Very early backups that were just an array of stash entries
+  if(Array.isArray(raw)){
+    return {items:raw,labs:[],generalNotes:'',settings:null};
+  }
+  // Allow common wrapper names from earlier experiments
+  if(raw && typeof raw==='object'){
+    const possible = raw.data || raw.inventory || raw.stash || raw.backup;
+    if(Array.isArray(possible)){
+      return {items:possible,labs:Array.isArray(raw.labs)?raw.labs:[],generalNotes:raw.generalNotes ?? '',settings:raw.settings ?? null};
+    }
+    if(possible && typeof possible==='object' && Array.isArray(possible.items)){
+      return {
+        items:possible.items,
+        labs:Array.isArray(possible.labs)?possible.labs:[],
+        generalNotes:possible.generalNotes ?? raw.generalNotes ?? '',
+        settings:possible.settings ?? raw.settings ?? null
+      };
+    }
+  }
+  throw new Error('Unsupported backup format');
+}
 
-<div class="modal" id="labModal">
-  <div class="sheet">
-    <div class="sheethead">
-      <h2 id="labFormTitle">Add Test</h2>
-      <button class="btn secondary" id="closeLabBtn">Close</button>
-    </div>
-    <input type="hidden" id="labEditId">
-    <div class="grid">
-      <div><label>Peptide</label><input id="labPeptide" placeholder="e.g. RT60"></div>
-      <div><label>Batch / lot</label><input id="labBatch" placeholder="Optional"></div>
-      <div><label>Testing lab</label><input id="labName" placeholder="Lab name"></div>
-      <div><label>Test date</label><input id="labDate" type="date"></div>
-      <div><label>Purity %</label><input id="labPurity" type="number" min="0" max="100" step="0.01" inputmode="decimal" placeholder="e.g. 99.4"></div>
-      <div><label>Tested content / quantity</label><input id="labContent" placeholder="e.g. 59.8 mg"></div>
-      <div class="full"><label>Report / COA reference</label><input id="labReport" placeholder="Report ID, file name, URL note, etc."></div>
-      <div class="full"><label>Notes</label><textarea id="labNotes" placeholder="Anything you want to remember about this test"></textarea></div>
-    </div>
-    <div class="toolbar" style="margin-top:14px">
-      <button class="btn primary" id="saveLabBtn">Save Test</button>
-      <button class="btn secondary" id="cancelLabBtn">Cancel</button>
-    </div>
-  </div>
-</div>
+$('importFile').onchange=e=>{
+  const f=e.target.files && e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      let text=String(r.result||'').trim();
+      // Strip a UTF-8 BOM if iOS/file provider added one.
+      if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+      const raw=JSON.parse(text);
+      const backup=normalizeBackup(raw);
+
+      const stashCount=backup.items.length;
+      const labCount=backup.labs.length;
+      const message=`Restore ${stashCount} stash entr${stashCount===1?'y':'ies'}${labCount?` and ${labCount} lab test${labCount===1?'':'s'}`:''}? This replaces the matching data currently stored in this copy of Vial Vault.`;
+
+      if(confirm(message)){
+        items=backup.items;
+        localStorage.setItem(KEY,JSON.stringify(items));
+
+        // Only replace Labs if the backup actually contains a labs collection.
+        if(Array.isArray(raw.labs) || (raw.data && Array.isArray(raw.data.labs)) || (raw.backup && Array.isArray(raw.backup.labs))){
+          labEntries=backup.labs;
+          localStorage.setItem(LABS_KEY,JSON.stringify(labEntries));
+        }
+
+        if(backup.generalNotes!==undefined){
+          $('generalNotes').value=backup.generalNotes||'';
+          localStorage.setItem(NOTES_KEY,backup.generalNotes||'');
+        }
+        if(backup.settings){
+          settings=backup.settings;
+          localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+          applySettings();
+        }
+        renderAll();
+        renderLabs();
+        alert('Backup restored.');
+      }
+    }catch(err){
+      console.error('Backup import error:',err);
+      alert('I could not read that backup file. Make sure you selected a Vial Vault/Peptide Tracker JSON backup file.');
+    }
+    e.target.value='';
+  };
+  r.onerror=()=>{
+    alert('The backup file could not be opened.');
+    e.target.value='';
+  };
+  r.readAsText(f);
+};
+
+
+</script>
 
 </body>
 </html>
