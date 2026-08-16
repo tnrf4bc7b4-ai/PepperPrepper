@@ -351,7 +351,7 @@ footer::before{
   <div class="card">
     <div class="sectionhead">
       <h2>Labs</h2>
-      <button class="btn primary" id="addLabBtn">+ Add Test</button>
+      <button type="button" class="btn primary" id="addLabBtn" onclick="openLabForm();return false;">+ Add Test</button>
     </div>
     <input id="labSearch" placeholder="Search peptide, batch, lab, notes…">
     <div id="labsList" style="margin-top:10px"></div>
@@ -414,7 +414,7 @@ footer::before{
 </div>
 </div>
 
-<div class="modal" id="labModal">
+<div class="modal" id="labModal" style="z-index:9999">
   <div class="sheet">
     <div class="sheethead">
       <h2 id="labFormTitle">Add Test</h2>
@@ -559,9 +559,13 @@ function saveLabs(){
   renderLabs();
 }
 function openLabForm(id){
-  ['labPeptide','labBatch','labName','labDate','labPurity','labContent','labReport','labNotes'].forEach(k=>$(k).value='');
-  $('labEditId').value='';
-  $('labFormTitle').textContent='Add Test';
+  const modal=document.getElementById('labModal');
+  if(!modal){alert('Labs form could not be loaded. Refresh Vial Vault and try again.');return}
+  ['labPeptide','labBatch','labName','labDate','labPurity','labContent','labReport','labNotes'].forEach(k=>{
+    const el=document.getElementById(k); if(el) el.value='';
+  });
+  document.getElementById('labEditId').value='';
+  document.getElementById('labFormTitle').textContent='Add Test';
   if(id){
     const x=labEntries.find(i=>i.id===id); if(!x)return;
     $('labEditId').value=id;
@@ -575,9 +579,15 @@ function openLabForm(id){
     $('labReport').value=x.report||'';
     $('labNotes').value=x.notes||'';
   }
-  $('labModal').classList.add('show');
+  modal.classList.add('show');
+  modal.style.display='flex';
+  document.body.style.overflow='hidden';
 }
-function closeLabForm(){$('labModal').classList.remove('show')}
+function closeLabForm(){
+  const modal=document.getElementById('labModal');
+  if(modal){modal.classList.remove('show');modal.style.display='none'}
+  document.body.style.overflow='';
+}
 function saveLabEntry(){
   const peptide=$('labPeptide').value.trim();
   if(!peptide){alert('Add a peptide name first.');return}
@@ -635,7 +645,7 @@ function renderLabs(){
     }
   });
 }
-if($('addLabBtn')) $('addLabBtn').onclick=()=>openLabForm();
+// Add Test uses an inline handler for maximum iOS Safari compatibility.
 if($('closeLabBtn')) $('closeLabBtn').onclick=closeLabForm;
 if($('cancelLabBtn')) $('cancelLabBtn').onclick=closeLabForm;
 if($('saveLabBtn')) $('saveLabBtn').onclick=saveLabEntry;
